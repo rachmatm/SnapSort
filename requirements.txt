@@ -1,3 +1,4 @@
+audioop-lts
 gradio
 transformers
 torch --index-url https://pytorch.org
