@@ -36,6 +36,20 @@ Open `http://127.0.0.1:7860` in your browser.
 - **Quality Checks** — validates resolution (≥400px), sharpness, and text/watermark density
 - **Privacy First** — all processing is in-memory, nothing saved
 
+## Tech Stack
+
+| Layer | Choice |
+|-------|--------|
+| UI | Gradio |
+| Image Classification | `apple/mobilevit-small` via ONNX Runtime |
+| OCR | Tesseract via pytesseract |
+| Computer Vision | OpenCV |
+| Inference Backend | Hugging Face Optimum + ONNX Runtime (CPU) |
+
+## Final Decision
+
+Migrated from PyTorch to ONNX Runtime for faster CPU inference on HF Spaces free tier. Swapped `vit-base` (86M params) for `mobilevit-small` (5.6M params) — smaller model, lower latency, acceptable accuracy for category suggestion. Replaced EasyOCR with Tesseract for lighter system footprint.
+
 ## License
 
 MIT
