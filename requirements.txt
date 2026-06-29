@@ -1,9 +1,9 @@
 audioop-lts
 gradio>=5.15.0
 pydantic==2.10.6
-transformers
-torch --index-url https://pytorch.org
+transformers>=4.50.0,<5.0.0
+optimum[onnxruntime]>=2.0.0
 pillow
 numpy
 opencv-python-headless
-easyocr
+pytesseract

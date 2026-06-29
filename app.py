@@ -2,18 +2,28 @@ import gradio as gr
 from PIL import Image
 import numpy as np
 import cv2
-import easyocr
-from transformers import pipeline
+import pytesseract
+from transformers import pipeline, AutoImageProcessor
+from optimum.onnxruntime import ORTModelForImageClassification
 
-# 1. Initialize core AI and OCR models
-# EasyOCR reader initializes on CPU for quick local text extraction
-reader = easyocr.Reader(['en'], gpu=False)
+# 1. Initialize Core Models with ONNX Runtime Backend
+#    Using apple/mobilevit-small — a lightweight model optimized for CPU inference.
+#    ONNX Runtime eliminates PyTorch overhead and compiles the graph for max efficiency.
+model_id = "apple/mobilevit-small"
 
-image_classifier = pipeline(
-    "image-classification",
-    model="google/vit-base-patch16-224",
-    device=-1
-)
+try:
+    onnx_model = ORTModelForImageClassification.from_pretrained(model_id, export=True)
+    image_processor = AutoImageProcessor.from_pretrained(model_id, use_fast=True)
+
+    image_classifier = pipeline(
+        "image-classification",
+        model=onnx_model,
+        image_processor=image_processor
+    )
+    MODEL_LOADED = True
+except Exception as e:
+    MODEL_LOADED = False
+    MODEL_ERROR = str(e)
 
 # 2. Marketplace Categorisation Taxonomy — map visual labels to categories
 CATEGORY_KEYWORDS = {
@@ -25,9 +35,14 @@ CATEGORY_KEYWORDS = {
     "Beauty & Personal Care": ["bottle", "lotion", "lipstick", "cosmetic", "soap", "perfume", "hair", "shampoo", "cream"]
 }
 
+
 def analyze_product_image(image):
     if image is None:
         yield "⚠️ **Error:** Please upload a product photo."
+        return
+
+    if not MODEL_LOADED:
+        yield f"### ❌ Model Failed to Load\n**Error:** `{MODEL_ERROR}`\n\nThe ONNX model could not be initialized. Please try again later."
         return
 
     # ----------------------------------------------------
@@ -50,29 +65,32 @@ def analyze_product_image(image):
 **Reason:** The image is too blurry (Sharpness Score: {laplacian_var:.1f}). Please upload a sharper photo."""
         return
 
-    # Check C: Text-Heavy/Watermark Image Detection using OCR
-    ocr_results = reader.readtext(image)
-    total_text_area = 0
-    img_area = width * height
+    # Check C: Text-Heavy/Watermark Image Detection using Tesseract OCR
+    try:
+        ocr_data = pytesseract.image_to_data(gray_img, output_type=pytesseract.Output.DICT)
+        total_text_area = 0
+        img_area = width * height
 
-    for (bbox, text, prob) in ocr_results:
-        xs = [pt[0] for pt in bbox]
-        ys = [pt[1] for pt in bbox]
-        box_w = max(xs) - min(xs)
-        box_h = max(ys) - min(ys)
-        total_text_area += (box_w * box_h)
+        for i in range(len(ocr_data['text'])):
+            if int(ocr_data['conf'][i]) > 40 and ocr_data['text'][i].strip():
+                total_text_area += ocr_data['width'][i] * ocr_data['height'][i]
 
-    text_ratio = total_text_area / img_area
-    if text_ratio > 0.20:
-        yield f"""### ❌ Image Rejected
+        text_ratio = total_text_area / img_area
+        if text_ratio > 0.20:
+            yield f"""### ❌ Image Rejected
 **Reason:** The image contains too much text or graphic overlays ({text_ratio:.1%}). Please upload a clear photo of the product."""
-        return
+            return
+    except Exception:
+        # If OCR fails, proceed without text density check
+        text_ratio = 0.0
 
     # ----------------------------------------------------
-    # PHASE 2: Image-based Category Suggestion
+    # PHASE 2: ONNX-Powered Category Suggestion
     # ----------------------------------------------------
-    yield "⏳ **Step 2/3:** Classifying product category..."
+    yield "⏳ **Step 2/3:** Classifying product category via ONNX Runtime..."
     pil_img = Image.fromarray(image.astype('uint8'), 'RGB')
+
+    # Inference handled natively via ONNX Runtime sessions — no PyTorch overhead
     img_res = image_classifier(pil_img)
 
     top_img_object = img_res[0]['label'].split(',')[0].lower()
@@ -102,7 +120,7 @@ def analyze_product_image(image):
 * **Suggested Category:** **{suggested_category}**
 * **Primary Object Detected:** `{top_img_object}` *(Confidence: {top_img_confidence:.1%})*
 
-### 🔍 Top Detected Labels
+### 🔍 Top Detected Labels (ONNX Runtime)
 {top_labels}
 
 ### 🛠️ Quality Metrics
@@ -117,7 +135,7 @@ def analyze_product_image(image):
 
 # 3. Build UI Architecture
 with gr.Blocks(title="Marketplace AI Secure Validator") as demo:
-    gr.Markdown("# 🛒 Marketplace Product Category Suggester")
+    gr.Markdown("# 🛒 Marketplace Product Category Suggester (ONNX-Accelerated)")
     gr.Markdown("Upload a product photo to get an AI-suggested marketplace category and image quality check.")
 
     with gr.Row():

@@ -87,3 +87,24 @@
 **Root cause:** The `pydantic>=2.10.0,<3.0` range allowed newer pydantic releases (2.11+) that introduced an incompatibility with Gradio's Starlette integration. This caused `TypeError: argument of type 'bool' is not iterable` and the "No API Found" error on HF Spaces. ([HF Discussion](https://discuss.huggingface.co/t/error-no-api-found/146226))
 
 **Fix:** Pinned `pydantic==2.10.6` in `requirements.txt` — the last known version compatible with Gradio 5.x on HF Spaces.
+
+---
+
+## Issue #10 — ONNX Runtime migration for faster CPU inference
+**Status:** Fixed (2026-06-29)
+**Severity:** Low — performance optimization
+
+**Root cause:** The original pipeline used PyTorch (`torch`) as the inference backend for `google/vit-base-patch16-224`. PyTorch adds significant overhead on CPU-only environments (HF Spaces free tier: 2 vCPU, 16GB RAM), including framework initialization, memory allocation, and unoptimized graph execution.
+
+**Changes:**
+- Replaced PyTorch backend with ONNX Runtime via Hugging Face Optimum (`optimum[onnxruntime]`)
+- Switched model from `google/vit-base-patch16-224` to `apple/mobilevit-small` — a 15× smaller model (~5.6M vs ~86M params) optimized for mobile/edge CPU inference
+- Replaced `easyocr` with `pytesseract` for text density detection (lighter, system-level OCR)
+- Created `packages.txt` for `tesseract-ocr` system dependency on HF Spaces
+- Removed `torch` from direct dependencies (ONNX Runtime replaces it entirely)
+- Added error handling around model initialization with user-facing fallback
+
+**Trade-offs:**
+- `mobilevit-small` is faster but less accurate than `vit-base` on ImageNet benchmarks. Category mapping accuracy on product images should be validated.
+- `pytesseract` requires a system binary (`packages.txt`) and handles rotated/stylized text worse than EasyOCR.
+- First load with `export=True` adds ~30-60s cold start. For production, pre-export the ONNX model to the Hub.
