@@ -1,14 +1,26 @@
----
-title: Snapshort
-emoji: 📉
-colorFrom: purple
-colorTo: gray
-sdk: gradio
-sdk_version: 6.19.0
-python_version: '3.13'
-app_file: app.py
-pinned: false
-short_description: snap a photo, sort into a category
----
 
-Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
+
+# SnapSort
+
+> Snap it. Sort it. Sell it.
+
+AI-powered marketplace product classifier. Upload a photo — get a suggested category and image quality report. No data stored.
+
+## Quick Start
+
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+Open `http://127.0.0.1:7860` in your browser.
+
+## What It Does
+
+- **Category Suggestion** — classifies product images into Electronics, Fashion, Home & Kitchen, Books, Automotive, or Beauty & Personal Care
+- **Quality Checks** — validates resolution (≥400px), sharpness, and text/watermark density
+- **Privacy First** — all processing is in-memory, nothing saved
+
+## License
+
+MIT

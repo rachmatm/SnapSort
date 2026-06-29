@@ -1,0 +1,7 @@
+gradio
+transformers
+torch --index-url https://pytorch.org
+pillow
+numpy
+opencv-python-headless
+easyocr
