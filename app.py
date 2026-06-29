@@ -1,3 +1,4 @@
+import os
 import gradio as gr
 from PIL import Image
 import numpy as np
@@ -27,7 +28,7 @@ CATEGORY_KEYWORDS = {
 
 def analyze_product_image(image):
     if image is None:
-        return "⚠️ **Error:** Please upload a product photo.", gr.update(visible=False)
+        return "⚠️ **Error:** Please upload a product photo."
 
     # ----------------------------------------------------
     # PHASE 1: Image Quality Analysis
@@ -38,13 +39,13 @@ def analyze_product_image(image):
     # Check A: Low Resolution (Threshold: Less than 400px on either side)
     if height < 400 or width < 400:
         return f"""### ❌ Image Rejected
-**Reason:** Resolution is too low ({width}x{height}px). Please upload an image where both width and height are at least 400 pixels.""", gr.update(visible=False)
+**Reason:** Resolution is too low ({width}x{height}px). Please upload an image where both width and height are at least 400 pixels."""
 
     # Check B: Blur Detection using Laplacian Variance (Threshold: < 80 is blurry)
     laplacian_var = cv2.Laplacian(gray_img, cv2.CV_64F).var()
     if laplacian_var < 80.0:
         return f"""### ❌ Image Rejected
-**Reason:** The image is too blurry (Sharpness Score: {laplacian_var:.1f}). Please upload a sharper photo.""", gr.update(visible=False)
+**Reason:** The image is too blurry (Sharpness Score: {laplacian_var:.1f}). Please upload a sharper photo."""
 
     # Check C: Text-Heavy/Watermark Image Detection using OCR
     ocr_results = reader.readtext(image)
@@ -61,7 +62,7 @@ def analyze_product_image(image):
     text_ratio = total_text_area / img_area
     if text_ratio > 0.20:
         return f"""### ❌ Image Rejected
-**Reason:** The image contains too much text or graphic overlays ({text_ratio:.1%}). Please upload a clear photo of the product.""", gr.update(visible=False)
+**Reason:** The image contains too much text or graphic overlays ({text_ratio:.1%}). Please upload a clear photo of the product."""
 
     # ----------------------------------------------------
     # PHASE 2: Image-based Category Suggestion
@@ -128,4 +129,5 @@ with gr.Blocks(title="Marketplace AI Secure Validator") as demo:
     )
 
 if __name__ == "__main__":
-    demo.launch()
+    root_path = os.getenv("GRADIO_ROOT_PATH", "")
+    demo.launch(root_path=root_path)
