@@ -1,4 +1,3 @@
-import os
 import gradio as gr
 from PIL import Image
 import numpy as np
@@ -129,5 +128,4 @@ with gr.Blocks(title="Marketplace AI Secure Validator") as demo:
     )
 
 if __name__ == "__main__":
-    root_path = os.getenv("GRADIO_ROOT_PATH", "")
-    demo.launch(root_path=root_path)
+    demo.launch()

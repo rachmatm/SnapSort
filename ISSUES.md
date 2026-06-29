@@ -67,3 +67,13 @@
 **Root cause:** Gradio's internal dependencies shifted and no longer transitively install a compatible `pydantic` version, causing import failures.
 
 **Fix:** Added `pydantic>=2.10.0,<3.0` to `requirements.txt`.
+
+---
+
+## Issue #8 — `/gradio_api/info` returns 500 on HF Spaces
+**Status:** Fixed (2026-06-29)
+**Severity:** High — API endpoint broken, programmatic access fails
+
+**Root cause:** Manually setting `root_path` via `GRADIO_ROOT_PATH` environment variable caused Gradio 5.x's API info endpoint (`/gradio_api/info`) to return HTTP 500 on HuggingFace Spaces. The main UI loaded fine, but the API routing for the info endpoint broke due to the manual `root_path` override conflicting with HF Spaces' internal routing.
+
+**Fix:** Removed the manual `root_path` configuration. HF Spaces handles routing automatically — setting `root_path` manually is unnecessary and causes the API info endpoint to crash. Changed `demo.launch(root_path=root_path)` to `demo.launch()`.
