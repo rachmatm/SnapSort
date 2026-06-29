@@ -1,6 +1,6 @@
 audioop-lts
 gradio>=5.15.0
-pydantic>=2.10.0,<3.0
+pydantic==2.10.6
 transformers
 torch --index-url https://pytorch.org
 pillow

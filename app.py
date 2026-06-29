@@ -27,24 +27,28 @@ CATEGORY_KEYWORDS = {
 
 def analyze_product_image(image):
     if image is None:
-        return "⚠️ **Error:** Please upload a product photo."
+        yield "⚠️ **Error:** Please upload a product photo."
+        return
 
     # ----------------------------------------------------
     # PHASE 1: Image Quality Analysis
     # ----------------------------------------------------
+    yield "⏳ **Step 1/3:** Checking image quality..."
     gray_img = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
     height, width = gray_img.shape
 
     # Check A: Low Resolution (Threshold: Less than 400px on either side)
     if height < 400 or width < 400:
-        return f"""### ❌ Image Rejected
+        yield f"""### ❌ Image Rejected
 **Reason:** Resolution is too low ({width}x{height}px). Please upload an image where both width and height are at least 400 pixels."""
+        return
 
     # Check B: Blur Detection using Laplacian Variance (Threshold: < 80 is blurry)
     laplacian_var = cv2.Laplacian(gray_img, cv2.CV_64F).var()
     if laplacian_var < 80.0:
-        return f"""### ❌ Image Rejected
+        yield f"""### ❌ Image Rejected
 **Reason:** The image is too blurry (Sharpness Score: {laplacian_var:.1f}). Please upload a sharper photo."""
+        return
 
     # Check C: Text-Heavy/Watermark Image Detection using OCR
     ocr_results = reader.readtext(image)
@@ -60,12 +64,14 @@ def analyze_product_image(image):
 
     text_ratio = total_text_area / img_area
     if text_ratio > 0.20:
-        return f"""### ❌ Image Rejected
+        yield f"""### ❌ Image Rejected
 **Reason:** The image contains too much text or graphic overlays ({text_ratio:.1%}). Please upload a clear photo of the product."""
+        return
 
     # ----------------------------------------------------
     # PHASE 2: Image-based Category Suggestion
     # ----------------------------------------------------
+    yield "⏳ **Step 2/3:** Classifying product category..."
     pil_img = Image.fromarray(image.astype('uint8'), 'RGB')
     img_res = image_classifier(pil_img)
 
@@ -86,6 +92,7 @@ def analyze_product_image(image):
     # ----------------------------------------------------
     # PHASE 3: Build Report
     # ----------------------------------------------------
+    yield "⏳ **Step 3/3:** Generating report..."
     top_labels = "\n".join(
         [f"  - `{item['label'].split(',')[0]}` — {item['score']:.1%}" for item in img_res[:5]]
     )
@@ -105,7 +112,7 @@ def analyze_product_image(image):
 
 *Note: Data processed entirely in-memory and discarded after evaluation.*
 """
-    return markdown_report
+    yield markdown_report
 
 
 # 3. Build UI Architecture

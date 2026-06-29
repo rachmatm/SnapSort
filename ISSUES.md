@@ -77,3 +77,13 @@
 **Root cause:** Manually setting `root_path` via `GRADIO_ROOT_PATH` environment variable caused Gradio 5.x's API info endpoint (`/gradio_api/info`) to return HTTP 500 on HuggingFace Spaces. The main UI loaded fine, but the API routing for the info endpoint broke due to the manual `root_path` override conflicting with HF Spaces' internal routing.
 
 **Fix:** Removed the manual `root_path` configuration. HF Spaces handles routing automatically — setting `root_path` manually is unnecessary and causes the API info endpoint to crash. Changed `demo.launch(root_path=root_path)` to `demo.launch()`.
+
+---
+
+## Issue #9 — "No API Found" error on HF Spaces (pydantic incompatibility)
+**Status:** Fixed (2026-06-29)
+**Severity:** High — API endpoint broken on HuggingFace Spaces
+
+**Root cause:** The `pydantic>=2.10.0,<3.0` range allowed newer pydantic releases (2.11+) that introduced an incompatibility with Gradio's Starlette integration. This caused `TypeError: argument of type 'bool' is not iterable` and the "No API Found" error on HF Spaces. ([HF Discussion](https://discuss.huggingface.co/t/error-no-api-found/146226))
+
+**Fix:** Pinned `pydantic==2.10.6` in `requirements.txt` — the last known version compatible with Gradio 5.x on HF Spaces.
