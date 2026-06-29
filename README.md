@@ -1,6 +1,21 @@
+---
+title: SnapSort
+emoji: 📸
+colorFrom: blue
+colorTo: green
+sdk: gradio
+sdk_version: 4.44.1
+app_file: app.py
+pinned: false
+license: mit
+short_description: AI product image classifier and category suggester
+tags:
+  - image-classification
+  - marketplace
+  - gradio
+---
 
-
-# SnapSort
+# 📸 SnapSort
 
 > Snap it. Sort it. Sell it.
 
