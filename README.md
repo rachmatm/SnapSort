@@ -32,9 +32,9 @@ Open `http://127.0.0.1:7860` in your browser.
 
 ## What It Does
 
-- **Category Suggestion** — classifies product images into Electronics, Fashion, Home & Kitchen, Books, Automotive, or Beauty & Personal Care
-- **Quality Checks** — validates resolution (≥400px), sharpness, and text/watermark density
-- **Privacy First** — all processing is in-memory, nothing saved
+- **Category Suggestion**; classifies product images into Electronics, Fashion, Home & Kitchen, Books, Automotive, or Beauty & Personal Care
+- **Quality Checks**; validates resolution (≥400px), sharpness, and text/watermark density
+- **Privacy First**; all processing is in-memory, nothing saved
 
 ## Tech Stack
 
@@ -46,9 +46,9 @@ Open `http://127.0.0.1:7860` in your browser.
 | Computer Vision | OpenCV |
 | Inference Backend | Hugging Face Optimum + ONNX Runtime (CPU) |
 
-## Final Decision
+## Decision
 
-Migrated from PyTorch to ONNX Runtime for faster CPU inference on HF Spaces free tier. Swapped `vit-base` (86M params) for `mobilevit-small` (5.6M params) — smaller model, lower latency, acceptable accuracy for category suggestion. Replaced EasyOCR with Tesseract for lighter system footprint.
+ONNX Runtime for faster CPU inference on HF Spaces free tier. Swapped vit-base (86M params) for mobilevit-small (5.6M params); smaller model, lower latency, acceptable accuracy for category suggestion. Replaced EasyOCR with Tesseract for lighter system footprint.
 
 ## License
 
